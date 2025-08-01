@@ -20,9 +20,7 @@ class MyWindow(QMainWindow):
         super(MyWindow, self).__init__()
         self.ui = Ui_main_window()  # Создаем объект нашего интерфейса
         self.ui.setupUi(self)      # Устанавливаем наш интерфейс на главное окно
-
         self.ui.pushButton_2.clicked.connect(self.on_button_click)
-
     
     def on_button_click(self):
         """ Обработчик события нажатия кнопки. Запускает создание и визуализацию 3D-модели в отдельном процессе. """
