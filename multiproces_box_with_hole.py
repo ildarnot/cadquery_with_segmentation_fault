@@ -1,10 +1,29 @@
 import sys
 import multiprocessing
 
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
+from PySide6.QtCore import QThread, Signal
 
 from resources.main_window import Ui_main_window
 print("box Дочернего окна")
+
+class ProgressThread(QThread):
+    progress_signal = Signal(int)
+    
+    def __init__(self, params):
+        super().__init__()
+        self.params = params
+        
+    def run(self):
+        # Имитация прогресса (в реальном коде нужно добавить реальную логику)
+        for i in range(101):
+            self.progress_signal.emit(i)
+            # Здесь можно добавить реальную логику расчета
+            # Например, разбиение процесса на этапы
+            # И отправку прогресса после каждого этапа
+            
+        run_cadquery(self.params)
+
 def run_cadquery(params):
     """Функция, выполняемая в отдельном процессе"""
     import cadquery as cq
@@ -16,30 +35,6 @@ def run_cadquery(params):
     show(result)
     print("run_cadquery Функция самого подпроцесса")        
 
-
-# class MyWindow_main(QMainWindow):
-#     def __init__(self):
-#         super(MyWindow_main, self).__init__()
-#         self.ui = Ui_main_window()  # Создаем объект нашего интерфейса
-#         self.ui.setupUi(self)      # Устанавливаем наш интерфейс на главное окно
-        
-        
-#         # Создаем список для хранения открытых окон
-#         self.open_windows = []
-        
-#         # Классы окон модулей приложения, при добавлении нового окна нужно сюда добавлять классы       
-#         self.classes = {
-#             "MyWindow": MyWindow,
-#         }
-        
-#         self.ui.pushButton_2.clicked.connect(lambda: self.open_sliders_window(self.classes["MyWindow"])) # При нажатии на кнопку запускается окно построения шестерни
-              
-#     def open_sliders_window(self, class_name, **kwargs):
-#         self.sliders_window = class_name(**kwargs)
-#         self.sliders_window.show()
-#         # Сохраняем ссылку на новое окно в списке
-#         self.open_windows.append(self.sliders_window)    
-
 class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
@@ -47,7 +42,12 @@ class MyWindow(QMainWindow):
         self.ui.setupUi(self)      # Устанавливаем наш интерфейс на главное окно
         self.ui.pushButton_2.clicked.connect(self.on_button_click)
         self.ui.pushButton.setText("0")
-        print("MyWindow Функция инит дочернего окна")        
+        print("MyWindow Функция инит дочернего окна")     
+
+        # Добавляем ProgressBar в дочернее окно
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(10, 10, 300, 20)
+        self.progress_bar.setValue(0)   
 
 
     def on_button_click(self):
@@ -61,11 +61,12 @@ class MyWindow(QMainWindow):
         # Передаем параметры в отдельный процесс
         process = multiprocessing.Process(target=run_cadquery, args=((length, width, height, diameter),))
         process.start()
-        print("on_button_click Функция запуска нового процесса")        
+        print("on_button_click Функция запуска нового процесса")  
+
+        # Создаем и запускаем поток с прогрессом
+        self.progress_thread = ProgressThread((length, width, height, diameter))
+        self.progress_thread.progress_signal      
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)           # Инициализация приложения
-    # window = MyWindow_main()              # Создаем экземпляр окна
-    # window.show()                    # Показываем окно
-    # sys.exit(app.exec())                     # Запускаем цикл обработки событий

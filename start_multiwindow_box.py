@@ -1,7 +1,7 @@
 import sys
 import multiprocessing
 
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
 
 from resources.main_window import Ui_main_window
 from multiproces_box_with_hole import MyWindow
@@ -14,9 +14,16 @@ class MyWindow_main(QMainWindow):
         self.ui.setupUi(self)      # Устанавливаем наш интерфейс на главное окно
         print("MyWindow_main Функция инит первого окна")
         self.setWindowTitle("Стартовое окно")
+
+
+
         self.ui.pushButton.setText("Кнопка без действий")
         self.ui.pushButton_2.setText("Запуск нового окна для предпросмотра")
-  
+
+        # Добавляем ProgressBar в интерфейс
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(10, 10, 300, 20)  # Координаты и размер
+        self.progress_bar.setValue(0) 
         
         # Создаем список для хранения открытых окон
         self.open_windows = []
