@@ -15,14 +15,20 @@ class ProgressThread(QThread):
         self.params = params
         
     def run(self):
-        # Имитация прогресса (в реальном коде нужно добавить реальную логику)
-        for i in range(101):
-            self.progress_signal.emit(i)
-            # Здесь можно добавить реальную логику расчета
-            # Например, разбиение процесса на этапы
-            # И отправку прогресса после каждого этапа
-            
-        run_cadquery(self.params)
+        # Здесь мы только управляем прогрессом, не касаемся CADQuery
+        self.progress_signal.emit(0)  # Начальный прогресс
+        
+        # Имитируем время выполнения этапов
+        import time
+        time.sleep(1)  # Имитация создания призмы (40%)
+        self.progress_signal.emit(40)
+        
+        time.sleep(1)  # Имитация создания отверстия (30%)
+        self.progress_signal.emit(70)
+        
+        time.sleep(1)  # Имитация визуализации (30%)
+        self.progress_signal.emit(100)
+        print("Процесс завершен")
 
 def run_cadquery(params):
     """Функция, выполняемая в отдельном процессе"""
@@ -63,9 +69,13 @@ class MyWindow(QMainWindow):
         process.start()
         print("on_button_click Функция запуска нового процесса")  
 
-        # Создаем и запускаем поток с прогрессом
+        # Запускаем поток прогресса
         self.progress_thread = ProgressThread((length, width, height, diameter))
-        self.progress_thread.progress_signal      
+        self.progress_thread.progress_signal.connect(self.update_progress)
+        self.progress_thread.start()
+
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
 
 
 if __name__ == "__main__":
