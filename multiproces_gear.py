@@ -117,8 +117,9 @@ class MyWindow(QMainWindow):
     @Slot()
     def stop_progress(self):
         """При получении сигнала завершения остановим прогресс-бар."""
-        self.progress_bar.setRange(0, 100)                     # Убираем неопределенность
-        self.progress_bar.setValue(100)                        # Прогресс закончен
+        self.progress_bar.setRange(0, 1)      # устанавливаем диапазон минимального и максимального значений, так есть возможность остановить progressbar
+        self.progress_bar.reset()              # и сбрасываем значение\
+        print("stop_progress Завершили работу!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)           # Инициализация приложения
