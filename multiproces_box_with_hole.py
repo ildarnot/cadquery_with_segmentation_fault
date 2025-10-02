@@ -3,8 +3,6 @@ import multiprocessing
 from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
 from PySide6.QtCore import QThread, Signal, Slot
 from resources.main_window import Ui_main_window
-import cadquery as cq
-from cadquery.vis import show
 import time
 
 print("box Дочернего окна")
@@ -26,6 +24,9 @@ def run_cadquery(event, params):
     """
     Выполняемый процесс. По окончании вызывает событие event.
     """
+    import cadquery as cq
+    from cadquery.vis import show
+
     length, width, height, diameter = params
     result = cq.Workplane("front").box(length, width, height)  # создаём простую призму
     result = result.faces(">Z").workplane().hole(diameter)     # добавляем отверстие сверху
@@ -73,8 +74,10 @@ class MyWindow(QMainWindow):
     @Slot()
     def stop_progress(self):
         """При получении сигнала завершения остановим прогресс-бар."""
-        self.progress_bar.setRange(0, 100)                     # Убираем неопределенность
-        self.progress_bar.setValue(100)                        # Прогресс закончен
+        # self.progress_bar.setRange(0, 100)                     # Убираем неопределенность
+        # self.progress_bar.setValue(100)                        # Прогресс закончен
+        self.progress_bar.setRange(0, 1)      # устанавливаем диапазон минимального и максимального значений, так есть возможность остановить progressbar
+        self.progress_bar.reset()              # и сбрасываем значение
         print("stop_progress Завершили работу!")
 
 if __name__ == "__main__":
