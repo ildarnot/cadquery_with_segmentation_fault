@@ -1,13 +1,28 @@
 import sys
 import multiprocessing
 import math
+import time
 import pandas as pd
 
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
+from PySide6.QtCore import QThread, Signal, Slot
 
 from resources.main_window import Ui_main_window
 
-def run_cadquery(params):
+class ProgressThread(QThread):
+    finished_signal = Signal()  # Сигнал завершения
+
+    def __init__(self, event):
+        super().__init__()
+        self.event = event  # Подписываемся на событие завершения внешнего процесса
+
+    @Slot()
+    def run(self):
+        while not self.event.is_set():
+            time.sleep(0.1)  # Проверяем каждые 100 мс статус завершения
+        self.finished_signal.emit()  # Сообщаем главному окну о завершении работы
+
+def run_cadquery(event,params):
     """Функция, выполняемая в отдельном процессе"""
     import cadquery as cq
     from cadquery import Workplane
@@ -63,7 +78,7 @@ def run_cadquery(params):
 
     # Производим экструзию с поворотом
     final_shape = initial_profile.twistExtrude(height, total_rotation_angle)
-
+    event.set() 
     show(final_shape)
 
 class MyWindow(QMainWindow):
@@ -72,6 +87,9 @@ class MyWindow(QMainWindow):
         self.ui = Ui_main_window()  # Создаем объект нашего интерфейса
         self.ui.setupUi(self)      # Устанавливаем наш интерфейс на главное окно
         self.ui.pushButton_2.clicked.connect(self.on_button_click)
+        # Добавляем ProgressBar в дочернее окно
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(10, 10, 300, 20)
 
     def on_button_click(self):
         """Обработчик события нажатия кнопки."""
@@ -85,10 +103,22 @@ class MyWindow(QMainWindow):
 
         # Получаем список точек
         points_list = list(zip(df['X'], df['Y']))
-
+        event = multiprocessing.Event()                        # Объект синхронизации процессов
+        self.progress_bar.setRange(0, 0)                       # Переходим в режим неопределенного ожидания
         # Передаем параметры в отдельный процесс
-        process = multiprocessing.Process(target=run_cadquery, args=((length, width, height, diameter, points_list),))
+        process = multiprocessing.Process(target=run_cadquery, args=(event, (length, width, height, diameter, points_list),))
         process.start()
+
+        # Ждём завершения работы в отдельном потоке
+        self.progress_thread = ProgressThread(event)
+        self.progress_thread.finished_signal.connect(self.stop_progress)
+        self.progress_thread.start()
+
+    @Slot()
+    def stop_progress(self):
+        """При получении сигнала завершения остановим прогресс-бар."""
+        self.progress_bar.setRange(0, 100)                     # Убираем неопределенность
+        self.progress_bar.setValue(100)                        # Прогресс закончен
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)           # Инициализация приложения

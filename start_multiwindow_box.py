@@ -1,5 +1,6 @@
 import sys
 import multiprocessing
+import time
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
 
@@ -17,7 +18,7 @@ class MyWindow_main(QMainWindow):
 
 
 
-        self.ui.pushButton.setText("Кнопка без действий")
+        self.ui.pushButton.setText("ProgressBar")
         self.ui.pushButton_2.setText("Запуск нового окна для предпросмотра")
 
         # Добавляем ProgressBar в интерфейс
@@ -34,13 +35,22 @@ class MyWindow_main(QMainWindow):
         }
         
         self.ui.pushButton_2.clicked.connect(lambda: self.open_sliders_window(self.classes["MyWindow"])) # При нажатии на кнопку запускается окно построения шестерни
+        self.ui.pushButton.clicked.connect(self.progress_start) # При нажатии на кнопку запускается progress_bar
+ 
               
     def open_sliders_window(self, class_name, **kwargs):
         self.sliders_window = class_name(**kwargs)
         self.sliders_window.show()
         # Сохраняем ссылку на новое окно в списке
         self.open_windows.append(self.sliders_window)
-        print("open_sliders_window Функция открытия нового окна")    
+        print("open_sliders_window Функция открытия нового окна")
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)  # Сбросить прогресс-бар 
+
+    def progress_start(self):
+        self.progress_bar.setRange(0, 0)  # Режим неопределенности  
+        
+
 
 
 if __name__ == "__main__":
