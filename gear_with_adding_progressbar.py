@@ -5,14 +5,14 @@ import time
 import pandas as pd
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar
-from PySide6.QtCore import QThread, Signal, Slot
+from PySide6.QtCore import QThread, Signal, Slot, QTimer
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QProgressBar
 from PySide6.QtCore import Qt
 from resources.main_window import Ui_main_window
 
 class LoadingDialog(QDialog):
     finished_signal = Signal()
-    update_text_signal = Signal(str)  # Сигнал для обновления текста
+    update_text_signal = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -20,11 +20,9 @@ class LoadingDialog(QDialog):
         self.setWindowTitle("Подождите...")
 
         layout = QVBoxLayout()
-        
         self.label = QLabel("Идёт обработка...", alignment=Qt.AlignCenter)
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
-        
         button_cancel = QPushButton("Отмена")
         button_cancel.clicked.connect(self.reject)
 
@@ -33,20 +31,21 @@ class LoadingDialog(QDialog):
         layout.addWidget(button_cancel)
         self.setLayout(layout)
 
-        # Подключаем сигнал обновления текста
         self.update_text_signal.connect(self.update_text)
 
     def update_text(self, text):
-        """Обновляем текст в диалоге"""
         self.label.setText(text)
+        # Если пришло финальное сообщение — запускаем задержку
+        if text == "Процесс завершён!":
+            self._delayed_close()
+
+    def _delayed_close(self):
+        """Закрываем диалог через 1.5 секунды"""
+        QTimer.singleShot(1500, self.close)  # 1500 мс = 1.5 сек
 
     def closeEvent(self, event):
         self.finished_signal.emit()
         event.accept()
-
-    def on_final_message(self, text):
-        if text == "Процесс завершён!":
-            self.close()
 
 
 
@@ -67,10 +66,9 @@ class ProgressThread(QThread):
             except:
                 pass
 
-        # Финальное сообщение и сигнал о завершении
+        # Только отправляем финальный текст — НЕ эмитируем finished_signal здесь!
         self.update_text_signal.emit("Процесс завершён!")
-        time.sleep(0.1)  # Небольшая пауза, чтобы GUI успел обновить текст
-        self.finished_signal.emit()
+        # finished_signal будет эмитирован при закрытии диалога (через closeEvent)
 
 
 def run_cadquery(event, queue, params):
@@ -159,7 +157,14 @@ class MyWindow(QMainWindow):
 
         loading_dialog = LoadingDialog(parent=self)
         loading_dialog.show()
-        loading_dialog.update_text_signal.connect(loading_dialog.on_final_message)
+
+        self.progress_thread = ProgressThread(event, queue)
+        self.progress_thread.finished_signal.connect(
+            lambda: self.on_task_finished(process, loading_dialog)
+        )
+        self.progress_thread.update_text_signal.connect(
+            loading_dialog.update_text_signal
+)
 
         process = multiprocessing.Process(
             target=run_cadquery,
