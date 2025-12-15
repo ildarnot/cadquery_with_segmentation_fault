@@ -23,7 +23,7 @@ class Ui_main_window(object):
     def setupUi(self, main_window):
         if not main_window.objectName():
             main_window.setObjectName(u"main_window")
-        main_window.resize(256, 278)
+        main_window.resize(333, 278)
         self.centralwidget = QWidget(main_window)
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout_3 = QGridLayout(self.centralwidget)
@@ -109,10 +109,15 @@ class Ui_main_window(object):
 
         self.gridLayout_3.addLayout(self.gridLayout_2, 0, 0, 1, 1)
 
+        self.label_6 = QLabel(self.centralwidget)
+        self.label_6.setObjectName(u"label_6")
+
+        self.gridLayout_3.addWidget(self.label_6, 1, 0, 1, 1)
+
         main_window.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(main_window)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 256, 22))
+        self.menubar.setGeometry(QRect(0, 0, 333, 22))
         main_window.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(main_window)
         self.statusbar.setObjectName(u"statusbar")
@@ -132,5 +137,6 @@ class Ui_main_window(object):
         self.label_5.setText(QCoreApplication.translate("main_window", u"\u041e\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u0435, \u0440\u0430\u0434\u0438\u0443\u0441", None))
         self.pushButton.setText(QCoreApplication.translate("main_window", u"\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043c\u043e\u0434\u0435\u043b\u044c", None))
         self.pushButton_2.setText(QCoreApplication.translate("main_window", u"\u041f\u0440\u0435\u0434\u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440 \u043c\u043e\u0434\u0435\u043b\u0438", None))
+        self.label_6.setText(QCoreApplication.translate("main_window", u"\u0421\u0442\u0440\u043e\u043a\u0430 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u044f", None))
     # retranslateUi
 

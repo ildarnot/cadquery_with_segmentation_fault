@@ -4,6 +4,8 @@ UI_FILE="${RD}/main_window.ui"
 PY_FILE="${RD}/main_window.py"
 # Генерация py-кода из ui-файла
 pyside6-uic "$UI_FILE" -o "$PY_FILE"
+# ./ui_to_py.sh
+
 # # Данный код запускает конвертирование из ui в py, дополнительно - он добавляет возможность ставить в DoubleSpinBox и "," , и "." 
 # # Запускать в терминале bash по команде (переходим в нужную директорию в bash): cd "C:\Users\NotfullinIF\Desktop\Testing_git2\1\репозиторий\frontend\userforms" 
 # # И следующая команда: ".\ui_to_py.sh" 

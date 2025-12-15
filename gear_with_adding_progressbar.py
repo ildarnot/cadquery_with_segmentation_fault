@@ -20,7 +20,7 @@ class LoadingDialog(QDialog):
         self.setWindowTitle("Подождите...")
 
         layout = QVBoxLayout()
-        self.label = QLabel("Идёт обработка...", alignment=Qt.AlignCenter)
+        self.label = QLabel("                           Идёт обработка...                          ", alignment=Qt.AlignCenter)
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
         button_cancel = QPushButton("Отмена")
@@ -143,6 +143,8 @@ class MyWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.pushButton_2.clicked.connect(self.on_button_click)
 
+        
+
     def on_button_click(self):
         length = self.ui.length_doubleSpinBox.value()
         width = self.ui.width_doubleSpinBox.value()
@@ -151,38 +153,55 @@ class MyWindow(QMainWindow):
         df = pd.read_csv('dots_for_gear.txt', sep=' ', header=None, names=['X', 'Y'])
         points_list = list(zip(df['X'], df['Y']))
 
-
         event = multiprocessing.Event()
-        queue = multiprocessing.Queue()  # Создаём очередь для передачи статусов
+        queue = multiprocessing.Queue()
 
         loading_dialog = LoadingDialog(parent=self)
+
+        # Можно отключать 
         loading_dialog.show()
 
+        # Создаём поток мониторинга
         self.progress_thread = ProgressThread(event, queue)
+        self.progress_thread.update_text_signal.connect(self.update_status_label)
+        # Подключаем сигналы:
+        # - к диалогу (как было)
+        self.progress_thread.update_text_signal.connect(
+            loading_dialog.update_text_signal
+        )
+        # - к label_6 в главном окне (новое подключение)
+        self.progress_thread.update_text_signal.connect(
+            self.update_status_label
+        )
+        
+        # Сигнал завершения
         self.progress_thread.finished_signal.connect(
             lambda: self.on_task_finished(process, loading_dialog)
         )
-        self.progress_thread.update_text_signal.connect(
-            loading_dialog.update_text_signal
-)
 
         process = multiprocessing.Process(
             target=run_cadquery,
             args=(event, queue, (length, width, height, diameter, points_list))
         )
         process.start()
-
-        # Передаём очередь в поток мониторинга
-        self.progress_thread = ProgressThread(event, queue)
-        self.progress_thread.finished_signal.connect(
-            lambda: self.on_task_finished(process, loading_dialog)
-        )
-        self.progress_thread.update_text_signal.connect(
-            loading_dialog.update_text_signal
-        )
         self.progress_thread.start()
 
+
+    def update_status_label(self, text):
+        """Обновляет label_6 в главном окне"""
+        self.ui.label_6.setText(text)
         
+        if text == "Процесс завершён!":
+            self.ui.label_6.setStyleSheet("color: green;")
+            # Запускаем таймер: через 1500 мс установим "Строка состояния"
+            QTimer.singleShot(1500, self.reset_status_label)
+        else:
+            self.ui.label_6.setStyleSheet("")  # Сброс стиля
+
+    def reset_status_label(self):
+        """Сбрасывает label_6 к исходному тексту"""
+        self.ui.label_6.setText("Строка состояния")
+        self.ui.label_6.setStyleSheet("")  # Убираем зелёный цвет
 
     def on_task_finished(self, process, dialog):
         # 1. Ждём завершения процесса (с таймаутом)
